@@ -1,30 +1,19 @@
 import React, { useState } from 'react';
 import { Mail, Lock } from 'lucide-react';
 import axios from 'axios';
-//import { useNavigate } from 'react-router-dom';
+import logo from '../logo.svg';
+import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const LoginForm = () => {
-  //const navigate = useNavigate();
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
-    email: '',
-    password: ''
+    userEmail: '',
+    userPw: ''
   });
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await axios.post('http://localhost:80/api/login', formData);
-      console.log('Login success:', response.data);
-      // 로그인 성공 시 토큰 저장
-      localStorage.setItem('token', response.data.token);
-      // 대시보드로 이동
-      //navigate('/dashboard');
-    } catch (error) {
-      console.error('Login failed:', error.response?.data || error.message);
-    }
-  };
-
+  
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -32,8 +21,29 @@ const LoginForm = () => {
     });
   };
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      const response = await axios.post('http://localhost/auth/login', formData);
+      console.log(response.data);
+      const result = response.data;
+      // Context에 사용자 정보 저장
+      login(result.user, result.token);
+
+    } catch (error) {
+      console.error('Login failed:', error.response?.data || error.message);
+      alert("이메일 또는 패스워드 일치하지 않습니다");
+    }
+
+  };
+
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-900">
+    <div className="flex flex-col min-h-screen items-center justify-center bg-gray-900">
+      <div className="flex justify-center">
+        <img src={logo} alt="ECSO Logo" className="w-64 h-32" />
+      </div>
       <div className="w-full max-w-md bg-gray-800 rounded-lg shadow-2xl p-8">
         <h2 className="text-2xl font-bold text-center mb-6 text-white">로그인</h2>
 
@@ -43,10 +53,11 @@ const LoginForm = () => {
               <Mail className="h-5 w-5 text-gray-400" />
               <input
                 type="email"
-                name="email"
+                name="userEmail"
                 placeholder="이메일"
-                value={formData.email}
+                value={formData.userEmail}
                 onChange={handleChange}
+                autoComplete='off'
                 required
                 className="flex-1 outline-none text-sm bg-transparent text-white placeholder-gray-400"
               />
@@ -58,10 +69,11 @@ const LoginForm = () => {
               <Lock className="h-5 w-5 text-gray-400" />
               <input
                 type="password"
-                name="password"
+                name="userPw"
                 placeholder="비밀번호"
-                value={formData.password}
+                value={formData.userPw}
                 onChange={handleChange}
+                autoComplete='off'
                 required
                 className="flex-1 outline-none text-sm bg-transparent text-white placeholder-gray-400"
               />
