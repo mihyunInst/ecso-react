@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Mail, Lock } from 'lucide-react';
-import axios from 'axios';
 import logo from '../logo.svg';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import ecsoApi, { getCookie } from '../api/ecsoApi';
 
 const LoginForm = () => {
   const { login } = useAuth();
@@ -13,7 +13,7 @@ const LoginForm = () => {
     userEmail: '',
     userPw: ''
   });
-  
+
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -21,15 +21,20 @@ const LoginForm = () => {
     });
   };
 
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-      const response = await axios.post('http://localhost/auth/login', formData);
-      console.log(response.data);
-      const result = response.data;
-      // Context에 사용자 정보 저장
-      login(result.user, result.token);
+      await ecsoApi.post('/auth/login', formData);
+
+      // httpOnly가 아닌 쿠키는 JavaScript로 읽을 수 있음
+      const userInfo = getCookie('userInfo');
+
+      if (userInfo) {
+        login(userInfo);
+        navigate('/main');
+      }
 
     } catch (error) {
       console.error('Login failed:', error.response?.data || error.message);
@@ -57,7 +62,6 @@ const LoginForm = () => {
                 placeholder="이메일"
                 value={formData.userEmail}
                 onChange={handleChange}
-                autoComplete='off'
                 required
                 className="flex-1 outline-none text-sm bg-transparent text-white placeholder-gray-400"
               />
@@ -88,26 +92,16 @@ const LoginForm = () => {
           </button>
 
           <div className="flex justify-between pt-4 text-sm">
-            <a
-              href="/find-account"
+            <Link to="/findAccount"
               className="text-gray-400 hover:text-white transition-colors"
             >
               계정 찾기
-            </a>
-            <a href="/sign-up" className="text-gray-400 hover:text-white transition-colors">
+            </Link>
+            <Link to="/signUp" className="text-gray-400 hover:text-white transition-colors">
               회원가입
-            </a>
+            </Link>
           </div>
         </form>
-
-        <div className="mt-8 pt-8 border-t border-gray-700">
-          <div className="text-center text-gray-400 text-sm">
-            처음 방문하시나요?
-            <a href="/sign-up" className="text-blue-400 hover:text-blue-300 ml-2">
-              새 계정 만들기
-            </a>
-          </div>
-        </div>
       </div>
     </div>
   );
