@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import ecsoApi from '../api/ecsoApi';
 
@@ -61,9 +60,7 @@ const SignUp = () => {
       setIsLoading(true); // 로딩 시작
 
       // 서버에 이메일 인증번호 발송 요청
-      const response = await ecsoApi.post("/auth/sendVerification", { userEmail: email });
-
-      //console.log(response);
+      const response = await ecsoApi.post("/user/sendVerification", { userEmail: email });
 
       if (response.data.length == 0) {
         setVerificationSent(false);
@@ -98,7 +95,11 @@ const SignUp = () => {
       return;
     }
 
-    const response = await ecsoApi.post("/auth/checkEmailAuthKey", { verificationCode: verificationCode });
+    const response = await ecsoApi.post("/user/checkEmailAuthKey",
+      {
+        email: email,
+        authKey: verificationCode
+      });
 
     if (response.data == 1) {
       setIsTimerRunning(false);
@@ -107,6 +108,7 @@ const SignUp = () => {
 
     } else {
       alert("인증번호가 유효하지 않습니다");
+      setVerificationCode('');
     }
 
   };
@@ -165,16 +167,29 @@ const SignUp = () => {
   const handleFinalSubmit = async (e) => {
     e.preventDefault();
     if (validateFinalForm()) {
-      // TODO: 서버에 최종 회원가입 요청
-      //console.log('회원가입 성공:', { userEmail: email, ...formData });
 
-      const response = await ecsoApi.post("/auth/signUp", { userEmail: email, ...formData });
+      try {
+        const response = await ecsoApi.post("/user/signUp", { userEmail: email, ...formData });
 
-      if (response.data == 1) {
-        alert("회원가입 성공");
-        //window.location.href = '/';
+        console.log(response);
+        if (response.data == 1) {
+          alert("회원가입이 완료되었습니다");
+          navigate("/");
 
-      } 
+        } else if (response.data == 2) {
+
+          if (window.confirm("이미 가입된 이메일입니다. 로그인 하시겠습니까?")) {
+            navigate("/");
+          }
+
+        } else {
+          alert("회원가입 중 오류 발생. 관리자에 문의하세요.");
+        }
+      } catch (error) {
+        console.error('SignUp failed:', error.response?.data || error.message);
+        alert("회원가입 중 오류 발생. 관리자에 문의하세요.");
+      }
+
     }
   };
 

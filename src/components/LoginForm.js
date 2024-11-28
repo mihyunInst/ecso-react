@@ -4,10 +4,10 @@ import logo from '../logo.svg';
 import { useAuth } from '../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 import ecsoApi, { getCookie } from '../api/ecsoApi';
+import axios from 'axios';
 
 const LoginForm = () => {
   const { login } = useAuth();
-  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     userEmail: '',
@@ -21,19 +21,15 @@ const LoginForm = () => {
     });
   };
 
-
+  // 로그인 요청
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-      await ecsoApi.post('/auth/login', formData);
+      const response = await ecsoApi.post('/auth/login', formData);
 
-      // httpOnly가 아닌 쿠키는 JavaScript로 읽을 수 있음
-      const userInfo = getCookie('userInfo');
-
-      if (userInfo) {
-        login(userInfo);
-        navigate('/main');
+      if(response.data) {
+        login(response.data);
       }
 
     } catch (error) {
